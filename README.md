@@ -2,7 +2,9 @@
 
 Mac widgets that sit under your notch and get written by your coding agent. Purrch also keeps a private, local log of how you work, and can suggest widgets from what you repeat.
 
-Purrch is free and open source.
+Purrch is free and open source. This is an early release, so expect rough edges.
+
+![Purrch switching between widgets under the notch, then searching](docs/demo.gif)
 
 ## Install
 

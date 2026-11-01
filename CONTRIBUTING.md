@@ -22,6 +22,12 @@ With only the Command Line Tools, repeating `swift test` with no changes can fai
 build/Purrch.app/Contents/MacOS/Purrch --self-test /tmp/purrch-self-test
 ```
 
+To refresh the README's GIF, which only opens widgets that show no personal data:
+
+```bash
+build/Purrch.app/Contents/MacOS/Purrch --record-demo "$PWD/docs/demo.gif"
+```
+
 ## Guidelines
 
 - Read [the design principles](docs/DESIGN.md) before changing the interface.

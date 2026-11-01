@@ -50,6 +50,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let args = CommandLine.arguments
         if let index = args.firstIndex(of: "--self-test"), args.indices.contains(index + 1) {
             SelfTest(directory: URL(fileURLWithPath: args[index + 1]), delegate: self).run()
+        } else if let index = args.firstIndex(of: "--record-demo"), args.indices.contains(index + 1) {
+            DemoRecorder(output: URL(fileURLWithPath: args[index + 1])).run()
         } else if let index = args.firstIndex(of: "--describe"), args.indices.contains(index + 1) {
             services.agent.run(request: args[index + 1])
         } else {
