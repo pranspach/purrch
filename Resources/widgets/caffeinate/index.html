@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
+  #state { margin-bottom: 10px; color: #98989d; }
+  button { background: #2a2a2c; color: #fff; border: 0; border-radius: 7px; padding: 6px 12px; margin-right: 4px; font: inherit; }
+</style>
+<div id="state"></div>
+<button onclick="keepAwake(1800)">30m</button>
+<button onclick="keepAwake(3600)">1h</button>
+<button onclick="keepAwake(14400)">4h</button>
+<button onclick="stop()">Stop</button>
+<script>
+  // Tagged by the widget's parent PID file, so Stop can't touch caffeinate runs started elsewhere.
+  const pidFile = '"$HOME/Library/Application Support/Purrch/caffeinate.pid"';
+  async function refresh() {
+    const { code } = await purrch.exec(`kill -0 "$(cat ${pidFile} 2>/dev/null)" 2>/dev/null`);
+    document.getElementById('state').textContent = code === 0 ? 'Keeping your Mac awake.' : 'Your Mac can sleep normally.';
+  }
+  async function stop() {
+    await purrch.exec(`kill "$(cat ${pidFile} 2>/dev/null)" 2>/dev/null; rm -f ${pidFile}`);
+    refresh();
+  }
+  async function keepAwake(seconds) {
+    await stop();
+    await purrch.exec(`nohup caffeinate -dimt ${seconds} >/dev/null 2>&1 & echo $! > ${pidFile}`);
+    refresh();
+  }
+  refresh();
+  setInterval(refresh, 10000);
+</script>

@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #222; }
+  .port { font-variant-numeric: tabular-nums; font-weight: 600; width: 52px; }
+  .name { flex: 1; color: #98989d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button { background: #2a2a2c; color: #fff; border: 0; border-radius: 6px; padding: 3px 9px; font: inherit; }
+  #empty { color: #98989d; padding-top: 8px; }
+</style>
+<div id="list"></div>
+<script>
+  async function refresh() {
+    const { stdout } = await purrch.exec('lsof -nP -iTCP -sTCP:LISTEN -Fpcn');
+    const seen = new Map();
+    let pid, name;
+    for (const line of stdout.split('\n')) {
+      const value = line.slice(1);
+      if (line[0] === 'p') pid = value;
+      if (line[0] === 'c') name = value;
+      if (line[0] === 'n') {
+        const port = value.split(':').pop();
+        if (Number(port)) seen.set(port, { port, pid, name });
+      }
+    }
+    const rows = [...seen.values()].sort((a, b) => a.port - b.port).map((item) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = '<span class="port"></span><span class="name"></span><button>Stop</button>';
+      row.children[0].textContent = item.port;
+      row.children[1].textContent = item.name;
+      row.children[2].onclick = async () => {
+        await purrch.exec(`kill ${Number(item.pid)}`);
+        setTimeout(refresh, 300);
+      };
+      return row;
+    });
+    const list = document.getElementById('list');
+    if (rows.length) {
+      list.replaceChildren(...rows);
+    } else {
+      list.innerHTML = '<div id="empty">Nothing is listening.</div>';
+    }
+  }
+  refresh();
+  setInterval(refresh, 5000);
+</script>

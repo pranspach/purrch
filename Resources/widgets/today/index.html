@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .stat { background: #1c1c1e; border-radius: 8px; padding: 7px 9px; }
+  .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .stat span { color: #98989d; font-size: 10px; }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 60px; margin-top: 12px; }
+  .bars i { flex: 1; background: #ff9f0a; border-radius: 2px; min-height: 2px; }
+</style>
+<div class="stats" id="stats"></div>
+<div class="bars" id="bars"></div>
+<script>
+  const duration = (s) => {
+    const m = Math.floor(s / 60);
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+  };
+  async function refresh() {
+    const a = await purrch.activity();
+    const stats = [
+      ['Active', duration(a.activeSeconds)],
+      ['Longest focus', duration(a.longestFocusSeconds)],
+      ['Switches', a.appSwitches],
+      ['Keystrokes', a.keystrokes.toLocaleString()],
+    ];
+    document.getElementById('stats').replaceChildren(...stats.map(([label, value]) => {
+      const el = document.createElement('div');
+      el.className = 'stat';
+      el.innerHTML = '<b></b><span></span>';
+      el.children[0].textContent = value;
+      el.children[1].textContent = label;
+      return el;
+    }));
+    const peak = Math.max(...a.hourly, 1);
+    document.getElementById('bars').replaceChildren(...a.hourly.map((s) => {
+      const bar = document.createElement('i');
+      bar.style.height = (s / peak * 100) + '%';
+      return bar;
+    }));
+  }
+  refresh();
+  setInterval(refresh, 30000);
+</script>
