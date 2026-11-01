@@ -18,6 +18,10 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>15.0</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Purrch reads the current web address from your browser if you turn that on in Privacy, and widgets like Now Playing control your music app.</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSHighResolutionCapable</key>

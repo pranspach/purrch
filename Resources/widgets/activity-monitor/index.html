@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
+  .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .meter { background: #1c1c1e; border-radius: 8px; padding: 7px 9px; }
+  .meter b { font-size: 17px; font-variant-numeric: tabular-nums; }
+  .meter span { color: #98989d; font-size: 10px; display: block; }
+  .row { display: flex; gap: 8px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+  .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .value { color: #98989d; width: 52px; text-align: right; }
+</style>
+<div class="meters">
+  <div class="meter"><span>CPU in use</span><b id="cpu">–</b></div>
+  <div class="meter"><span>Memory in use</span><b id="memory">–</b></div>
+</div>
+<div id="list"></div>
+<script>
+  const text = (id, value) => { document.getElementById(id).textContent = value; };
+  async function refresh() {
+    const top = await purrch.exec('top -l 1 -n 0 | grep -E "^(CPU usage|PhysMem)"');
+    const idle = /([\d.]+)% idle/.exec(top.stdout);
+    if (idle) text('cpu', (100 - Number(idle[1])).toFixed(0) + '%');
+    const used = /PhysMem: (\S+) used/.exec(top.stdout);
+    if (used) text('memory', used[1]);
+
+    const ps = await purrch.exec('ps -Aceo pcpu=,rss=,comm= -r | head -5');
+    document.getElementById('list').replaceChildren(...ps.stdout.trim().split('\n').map((line) => {
+      const match = /^\s*([\d.]+)\s+(\d+)\s+(.*)$/.exec(line);
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = '<span class="name"></span><span class="value"></span><span class="value"></span>';
+      if (match) {
+        row.children[0].textContent = match[3];
+        row.children[1].textContent = Number(match[1]).toFixed(0) + '%';
+        row.children[2].textContent = (Number(match[2]) / 1048576).toFixed(1) + ' GB';
+      }
+      return row;
+    }));
+  }
+  refresh();
+  setInterval(refresh, 4000);
+</script>

@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
+  #title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #detail { color: #98989d; margin: 2px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  button { background: #2a2a2c; color: #fff; border: 0; border-radius: 7px; padding: 6px 12px; margin-right: 4px; font: inherit; }
+</style>
+<div id="title">Nothing playing</div>
+<div id="detail">Spotify and Music are supported.</div>
+<div id="controls" hidden>
+  <button onclick="control('previous track')">⏮</button>
+  <button onclick="control('playpause')">⏯</button>
+  <button onclick="control('next track')">⏭</button>
+</div>
+<script>
+  // "is running" doesn't launch the app, so opening this widget never starts your music player.
+  const read = (app, artistProperty) => `if application "${app}" is running then
+    tell application "${app}"
+      if player state is not stopped then return "${app}" & linefeed & (player state as text) & linefeed & name of current track & linefeed & ${artistProperty} of current track
+    end tell
+  end if`;
+  const script = read('Spotify', 'artist') + '\n' + read('Music', 'artist');
+  const quote = (value) => "'" + value.replace(/'/g, "'\\''") + "'";
+  let activeApp = null;
+
+  async function refresh() {
+    const { stdout } = await purrch.exec('osascript -e ' + quote(script));
+    const [app, state, title, artist] = stdout.trim().split('\n');
+    activeApp = title ? app : null;
+    document.getElementById('controls').hidden = !activeApp;
+    document.getElementById('title').textContent = title || 'Nothing playing';
+    document.getElementById('detail').textContent = title
+      ? `${artist} · ${app}${state === 'paused' ? ' · Paused' : ''}`
+      : 'Spotify and Music are supported.';
+  }
+  async function control(command) {
+    if (!activeApp) return;
+    await purrch.exec('osascript -e ' + quote(`tell application "${activeApp}" to ${command}`));
+    setTimeout(refresh, 300);
+  }
+  refresh();
+  setInterval(refresh, 5000);
+</script>

@@ -2,25 +2,47 @@
 <meta charset="utf-8">
 <style>
   body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
-  .item { padding: 6px 8px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; }
   .item:hover { background: #1c1c1e; }
+  .item img { max-width: 40px; max-height: 32px; border-radius: 3px; }
+  .text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kind { color: #98989d; font-size: 10px; }
   #empty { color: #98989d; padding-top: 8px; }
 </style>
 <div id="list"></div>
 <script>
+  let shown = null;
   async function refresh() {
     const items = await purrch.clipboard();
+    const key = items.map((item) => item.id).join();
+    if (key === shown) return;
+    shown = key;
+
     const list = document.getElementById('list');
     if (!items.length) {
-      list.innerHTML = '<div id="empty">Copy some text and it will show up here.</div>';
+      list.innerHTML = '<div id="empty">Copy something and it will show up here. Click an item to paste it.</div>';
       return;
     }
-    list.replaceChildren(...items.map((text) => {
+    list.replaceChildren(...items.map((item) => {
       const row = document.createElement('div');
       row.className = 'item';
-      row.textContent = text;
-      row.title = text;
-      row.onclick = () => purrch.copy(text);
+      if (item.thumbnail) {
+        const image = document.createElement('img');
+        image.src = item.thumbnail;
+        row.append(image);
+      }
+      const text = document.createElement('span');
+      text.className = 'text';
+      text.textContent = item.text;
+      text.title = item.text;
+      row.append(text);
+      if (item.kind !== 'text') {
+        const kind = document.createElement('span');
+        kind.className = 'kind';
+        kind.textContent = item.kind;
+        row.append(kind);
+      }
+      row.onclick = () => purrch.pasteItem(item.id);
       return row;
     }));
   }

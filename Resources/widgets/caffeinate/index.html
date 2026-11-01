@@ -11,7 +11,7 @@
 <button onclick="keepAwake(14400)">4h</button>
 <button onclick="stop()">Stop</button>
 <script>
-  // Tagged by the widget's parent PID file, so Stop can't touch caffeinate runs started elsewhere.
+  // Tracks its own PID, so Stop can't touch caffeinate runs started elsewhere.
   const pidFile = '"$HOME/Library/Application Support/Purrch/caffeinate.pid"';
   async function refresh() {
     const { code } = await purrch.exec(`kill -0 "$(cat ${pidFile} 2>/dev/null)" 2>/dev/null`);

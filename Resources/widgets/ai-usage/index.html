@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0 12px; font: 13px -apple-system; color: #fff; user-select: none; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat { background: #1c1c1e; border-radius: 8px; padding: 7px 9px; }
+  .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .stat span { color: #98989d; font-size: 10px; }
+  p { color: #98989d; font-size: 11px; margin: 8px 0 0; }
+</style>
+<div class="stats">
+  <div class="stat"><b id="input">–</b><span>Input tokens today</span></div>
+  <div class="stat"><b id="output">–</b><span>Output tokens today</span></div>
+</div>
+<p>Approximate, from Claude Code's local logs (UTC day). Input excludes cached tokens.</p>
+<script>
+  // A message is logged once per streamed block, so this keeps the last usage per message ID.
+  const command = `find "$HOME/.claude/projects" -name '*.jsonl' -mtime -2 -print0 2>/dev/null
+    | xargs -0 grep -h "\\"timestamp\\":\\"$(date -u +%F)" 2>/dev/null
+    | awk '{ if (!match($0, /"id":"msg_[^"]+"/)) next; id = substr($0, RSTART, RLENGTH); if (match($0, /"input_tokens":[0-9]+/)) { split(substr($0, RSTART, RLENGTH), a, ":"); input[id] = a[2] } if (match($0, /"output_tokens":[0-9]+/)) { split(substr($0, RSTART, RLENGTH), a, ":"); output[id] = a[2] } } END { for (id in input) i += input[id]; for (id in output) o += output[id]; print i + 0, o + 0 }'`.replace(/\n\s*/g, ' ');
+  const short = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n);
+  async function refresh() {
+    const { stdout } = await purrch.exec(command);
+    const [input, output] = stdout.trim().split(' ').map(Number);
+    document.getElementById('input').textContent = short(input || 0);
+    document.getElementById('output').textContent = short(output || 0);
+  }
+  refresh();
+  setInterval(refresh, 60000);
+</script>
